@@ -35,9 +35,9 @@ def send_message(producer, topic, message, key=None):
 def delivery_callback(err, msg):
     """Callback for message delivery confirmation"""
     if err is not None:
-        print(f"❌ Message delivery failed: {err}")
+        print(f"Message delivery failed: {err}")
     else:
-        print(f"✅ Message delivered to {msg.topic()}[{msg.partition()}] at offset {msg.offset()}")
+        print(f"Message delivered to {msg.topic()}[{msg.partition()}] at offset {msg.offset()}")
 
 def main():
     topic = "demo-topic"

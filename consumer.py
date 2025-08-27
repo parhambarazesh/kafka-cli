@@ -46,7 +46,7 @@ def consume_messages(consumer, topic, mode="continuous"):
                 continue
 
             if msg.error():
-                print(f"\n❌ Consumer error: {msg.error()}")
+                print(f"\n Consumer error: {msg.error()}")
                 continue
 
             # Process the message
