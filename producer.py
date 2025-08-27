@@ -24,6 +24,7 @@ def send_message(producer, topic, message, key=None):
             topic=topic,
             key=key,
             value=message,
+            # partition=2, # Send to partition
             callback=delivery_callback
         )
         producer.flush()  # Wait for message to be delivered

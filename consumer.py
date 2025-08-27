@@ -1,7 +1,8 @@
 import uuid
 import time
 import sys
-from confluent_kafka import Consumer
+from confluent_kafka import Consumer, TopicPartition
+
 
 def create_consumer(group_id=None, start_from="latest"):
     """Create a Kafka consumer with proper configuration"""
@@ -27,6 +28,10 @@ def consume_messages(consumer, topic, mode="continuous"):
 
     consumer.subscribe([topic])
     print(f"Subscribed to topic: {topic}")
+
+    # To consume a specific partition, uncomment below + comment the subscribe line above
+    # tp = TopicPartition('demo-topic', 2)
+    # consumer.assign([tp])
 
     if mode == "latest_only":
         print("Positioning at end of topic to catch only new messages...")
