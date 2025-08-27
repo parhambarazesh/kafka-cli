@@ -62,7 +62,7 @@ def consume_messages(consumer, topic, mode="continuous"):
             print(f"   Timestamp: {msg.timestamp()[1] if msg.timestamp()[1] > 0 else 'N/A'}")
 
             if mode == "single":
-                print("✅ Single message mode - exiting after first message")
+                print("Single message mode - exiting after first message")
                 break
 
     except KeyboardInterrupt:
