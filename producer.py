@@ -6,16 +6,17 @@ Run this to send messages to the demo-topic
 
 import time
 import sys
-from confluent_kafka import Producer
+from argparse import ArgumentParser
 
-def create_producer():
-    return Producer({
-        "bootstrap.servers": "localhost:9092",
-        "acks": "all",  # Wait for all replicas to acknowledge
-        "retries": 3,
-        "batch.size": 16384,
-        "linger.ms": 10,
-    })
+from confluent_kafka import Producer
+import json
+
+
+def get_config(file_path):
+    with open(file_path, 'r') as file:
+        config_data = json.load(file)
+    return config_data
+
 
 def send_message(producer, topic, message, key=None):
     """Send a message to Kafka topic"""
@@ -33,6 +34,7 @@ def send_message(producer, topic, message, key=None):
         print(f"❌ Failed to send message: {e}")
         return False
 
+
 def delivery_callback(err, msg):
     """Callback for message delivery confirmation"""
     if err is not None:
@@ -40,49 +42,36 @@ def delivery_callback(err, msg):
     else:
         print(f"Message delivered to {msg.topic()}[{msg.partition()}] at offset {msg.offset()}")
 
-def main():
-    topic = "demo-topic"
-    producer = create_producer()
+
+def main(config):
+    topic = config.get("topic")
+    producer = Producer(config.get("config"))
 
     print("Kafka Producer started!")
     print(f"Sending messages to topic: {topic}")
     print("-" * 50)
 
     try:
-        if len(sys.argv) > 1:
-            # Send message from command line argument
-            message = " ".join(sys.argv[1:])
-            timestamp = int(time.time())
-            key = f"key-{timestamp}"
+        print("Interactive mode - type messages (Ctrl+C to exit):")
+        counter = 1
 
-            print(f"Sending: {message}")
-            success = send_message(producer, topic, message, key)
+        while True:
+            try:
+                message = input(f"Message #{counter}: ")
+                if message.strip():
+                    timestamp = int(time.time())
+                    key = f"key-{timestamp}"
+                    # key = "static-key"  # Uncomment to use a static key for partitioning
 
-            if success:
-                print("Message sent successfully!")
-            else:
-                print("❌ Failed to send message")
-        else:
-            # Interactive mode
-            print("Interactive mode - type messages (Ctrl+C to exit):")
-            counter = 1
+                    success = send_message(producer, topic, message, key)
+                    if success:
+                        print(f"✅ Sent message #{counter} with key '{key}'")
+                        counter += 1
+                    else:
+                        print("❌ Failed to send message")
 
-            while True:
-                try:
-                    message = input(f"Message #{counter}: ")
-                    if message.strip():
-                        timestamp = int(time.time())
-                        key = f"key-{timestamp}"
-
-                        success = send_message(producer, topic, message, key)
-                        if success:
-                            print(f"✅ Sent message #{counter}")
-                            counter += 1
-                        else:
-                            print("❌ Failed to send message")
-
-                except EOFError:
-                    break
+            except EOFError:
+                break
 
     except KeyboardInterrupt:
         print("\nProducer stopped by user")
@@ -91,5 +80,16 @@ def main():
         producer.flush()
         print("Producer closed")
 
+
 if __name__ == "__main__":
-    main()
+    parser = ArgumentParser()
+    parser.add_argument("--consume-from", help="kafka or eventhub", default="kafka")
+    args = parser.parse_args()
+    environment = args.consume_from
+
+    conf = get_config("config.json").get("producer").get(environment)
+    if conf is None:
+        print(f"Environment '{environment}' not found in config.json. Exiting.")
+        sys.exit(1)
+
+    main(conf)

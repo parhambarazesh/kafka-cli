@@ -1,25 +1,30 @@
+import json
 import uuid
 import time
 import sys
+from argparse import ArgumentParser
+
 from confluent_kafka import Consumer, TopicPartition
 
+def get_config(file_path):
+    with open(file_path, 'r') as file:
+        config_data = json.load(file)
+    return config_data
 
-def create_consumer(group_id=None, start_from="latest"):
+def create_consumer(config, group_id=None, start_from="latest"):
     """Create a Kafka consumer with proper configuration"""
 
     if group_id is None:
         # Use unique group ID to always start fresh
         group_id = f"consumer-{int(time.time())}-{uuid.uuid4().hex[:8]}"
 
-    config = {
-        "bootstrap.servers": "localhost:9092",
-        "group.id": group_id,
-        "auto.offset.reset": start_from,  # "earliest" or "latest"
-        "enable.auto.commit": True,
-        "auto.commit.interval.ms": 1000,
-        "session.timeout.ms": 30000,
-        "heartbeat.interval.ms": 3000,
-    }
+    for key, value in config.items():
+        if isinstance(value, str) and value.startswith("{{") and value.endswith("}}"):
+            var = value[2:-2].strip()
+            if var == "group_id":
+                config[key] = group_id
+            elif var == "start_from":
+                config[key] = start_from
 
     return Consumer(config), group_id
 
@@ -75,8 +80,9 @@ def consume_messages(consumer, topic, mode="continuous"):
 
     return message_count
 
-def main():
-    topic = "demo-topic"
+def main(config):
+    topic = config.get("topic")
+    config = config.get("config")
 
     if "--help" in sys.argv or "-h" in sys.argv:
         print("Kafka Consumer Usage:")
@@ -87,22 +93,22 @@ def main():
         print("  python consumer.py --single           # Read one message and exit")
         return
 
-    if "--fixed-group" in sys.argv:
+    if args.fixed_group:
         group_id = "my-fixed-consumer-group"
         print("Using fixed consumer group (will remember position)")
     else:
         group_id = None
         print("Using unique consumer group (fresh start)")
 
-    if "--from-beginning" in sys.argv: # Read all messages from the latest position
+    if args.from_beginning: # Read all messages from the latest position
         start_from = "earliest"
         mode = "continuous"
         print("Will read from beginning of topic")
-    elif "--latest-only" in sys.argv:
+    elif args.latest_only:
         start_from = "latest"
         mode = "latest_only"
-        print("Will only read NEW messages")
-    elif "--single" in sys.argv:
+        print("Will only read new messages")
+    elif args.single:
         start_from = "latest"
         mode = "single"
         print("Single message mode")
@@ -111,7 +117,7 @@ def main():
         mode = "continuous"
         print("Continuous mode from latest position")
 
-    consumer, actual_group_id = create_consumer(group_id, start_from)
+    consumer, actual_group_id = create_consumer(config, group_id, start_from)
 
     print("Kafka Consumer started!")
     print(f"Consumer Group ID: {actual_group_id}")
@@ -127,4 +133,19 @@ def main():
         print("Consumer closed")
 
 if __name__ == "__main__":
-    main()
+    parser = ArgumentParser()
+    parser.add_argument("--from-beginning", action="store_true", help="Read all messages from the beginning")
+    parser.add_argument("--latest-only", action="store_true", help="Only read new messages")
+    parser.add_argument("--fixed-group", action="store_true", help="Use a fixed consumer group (remembers position)")
+    parser.add_argument("--single", action="store_true", help="Read a single message and exit")
+    parser.add_argument("--consume-from", help="local or eventhub", default="local")
+    args = parser.parse_args()
+
+    environment = args.consume_from
+
+    conf = get_config("config.json").get("consumer").get(environment)
+    if conf is None:
+        print(f"Environment '{environment}' not found in config.json. Exiting.")
+        sys.exit(1)
+
+    main(conf)
