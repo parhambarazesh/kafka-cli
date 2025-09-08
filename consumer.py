@@ -12,8 +12,6 @@ def get_config(file_path):
     return config_data
 
 def create_consumer(config, group_id=None, start_from="latest"):
-    """Create a Kafka consumer with proper configuration"""
-
     if group_id is None:
         # Use unique group ID to always start fresh
         group_id = f"consumer-{int(time.time())}-{uuid.uuid4().hex[:8]}"
@@ -29,14 +27,12 @@ def create_consumer(config, group_id=None, start_from="latest"):
     return Consumer(config), group_id
 
 def consume_messages(consumer, topic, mode="continuous"):
-    """Consume messages from Kafka topic"""
-
-    consumer.subscribe([topic])
-    print(f"Subscribed to topic: {topic}")
-
-    # To consume a specific partition, uncomment below + comment the subscribe line above
-    # tp = TopicPartition('demo-topic', 2)
-    # consumer.assign([tp])
+    if args.partition:
+        tp = TopicPartition('demo-topic', 2)
+        consumer.assign([tp])
+    else:
+        consumer.subscribe([topic])
+        print(f"Subscribed to topic: {topic}")
 
     if mode == "latest_only":
         print("Positioning at end of topic to catch only new messages...")
@@ -81,48 +77,37 @@ def consume_messages(consumer, topic, mode="continuous"):
     return message_count
 
 def main(config):
-    topic = config.get("topic")
+    topic = args.topic
     config = config.get("config")
 
     if "--help" in sys.argv or "-h" in sys.argv:
-        print("Kafka Consumer Usage:")
-        print("  python consumer.py                    # Continuous mode with unique group")
-        print("  python consumer.py --fixed-group      # Use fixed group (remembers position)")
-        print("  python consumer.py --from-beginning   # Read all messages from start")
-        print("  python consumer.py --latest-only      # Only new messages after start")
-        print("  python consumer.py --single           # Read one message and exit")
+        parser.print_help()
         return
 
     if args.fixed_group:
         group_id = "my-fixed-consumer-group"
-        print("Using fixed consumer group (will remember position)")
     else:
         group_id = None
-        print("Using unique consumer group (fresh start)")
 
     if args.from_beginning: # Read all messages from the latest position
         start_from = "earliest"
         mode = "continuous"
-        print("Will read from beginning of topic")
     elif args.latest_only:
         start_from = "latest"
         mode = "latest_only"
-        print("Will only read new messages")
     elif args.single:
         start_from = "latest"
         mode = "single"
-        print("Single message mode")
     else:
         start_from = "latest"
         mode = "continuous"
-        print("Continuous mode from latest position")
 
     consumer, actual_group_id = create_consumer(config, group_id, start_from)
 
-    print("Kafka Consumer started!")
-    print(f"Consumer Group ID: {actual_group_id}")
-    print(f"Topic: {topic}")
-    print("-" * 60)
+    print(f"Kafka Consumer started!\n"
+          f"Consumer Group ID: {actual_group_id}\n"
+          f"Topic: {topic}\n"
+          f"{'-' * 60}")
 
     try:
         message_count = consume_messages(consumer, topic, mode)
@@ -139,6 +124,8 @@ if __name__ == "__main__":
     parser.add_argument("--fixed-group", action="store_true", help="Use a fixed consumer group (remembers position)")
     parser.add_argument("--single", action="store_true", help="Read a single message and exit")
     parser.add_argument("--consume-from", help="local or eventhub", default="local")
+    parser.add_argument("--partition", type=int, help="Specific partition to consume from", default=None)
+    parser.add_argument("--topic", type=str, help="Topic to consume to", default="demo-topic")
     args = parser.parse_args()
 
     environment = args.consume_from

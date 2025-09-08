@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Standalone Kafka Producer
-Run this to send messages to the demo-topic
-"""
-
 import time
 import sys
 from argparse import ArgumentParser
@@ -19,15 +13,17 @@ def get_config(file_path):
 
 
 def send_message(producer, topic, message, key=None):
-    """Send a message to Kafka topic"""
+    kwargs = {
+        "topic": topic,
+        "key": key,
+        "value": message,
+        "callback": delivery_callback,
+    }
+    if args.partition is not None:
+        kwargs["partition"] = args.partition
+
     try:
-        producer.produce(
-            topic=topic,
-            key=key,
-            value=message,
-            # partition=2, # Send to partition
-            callback=delivery_callback
-        )
+        producer.produce(**kwargs)
         producer.flush()  # Wait for message to be delivered
         return True
     except Exception as e:
@@ -36,7 +32,7 @@ def send_message(producer, topic, message, key=None):
 
 
 def delivery_callback(err, msg):
-    """Callback for message delivery confirmation"""
+    # Callback for message delivery confirmation
     if err is not None:
         print(f"Message delivery failed: {err}")
     else:
@@ -44,12 +40,18 @@ def delivery_callback(err, msg):
 
 
 def main(config):
-    topic = config.get("topic")
+    if "--help" in sys.argv or "-h" in sys.argv:
+        parser.print_help()
+        return
+
+    topic = args.topic
     producer = Producer(config.get("config"))
 
-    print("Kafka Producer started!")
-    print(f"Sending messages to topic: {topic}")
-    print("-" * 50)
+    print(
+        f"Kafka Producer started!\n"
+        f"Sending messages to topic: {topic}\n"
+        f"{'-' * 50}"
+    )
 
     try:
         print("Interactive mode - type messages (Ctrl+C to exit):")
@@ -83,9 +85,11 @@ def main(config):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--consume-from", help="kafka or eventhub", default="kafka")
+    parser.add_argument("--publish-to", help="target environment to publish messages to; kafka or eventhub", default="kafka")
+    parser.add_argument("--partition", type=int, help="Specific partition to produce to", default=None)
+    parser.add_argument("--topic", type=str, help="Topic to produce to", default="demo-topic")
     args = parser.parse_args()
-    environment = args.consume_from
+    environment = args.publish_to
 
     conf = get_config("config.json").get("producer").get(environment)
     if conf is None:
