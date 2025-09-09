@@ -1,3 +1,18 @@
+"""Kafka Producer Script"""
+"""
+Example usage:
+    python producer.py --publish-to kafka --topic demo-topic --partition 0
+    python producer.py --publish-to eventhub --topic test-event-hub partition 1
+This script allows sending messages to a specified Kafka topic interactively.
+Messages can be sent to a specific partition if desired.
+Configuration is read from a JSON file (config.json) which should contain
+the necessary connection details for Kafka or Event Hub.
+
+Note:
+Kafka supports auto creation of non-existent topics (see docker-compose.yml). But Azure Event Hubs does not nativelt
+support auto creation of Event Hubs. You need to create the Event Hub beforehand in the Azure portal or use Azure CLI.
+The producer script can publish to existing Event Hubs.
+"""
 import time
 import sys
 from argparse import ArgumentParser

@@ -1,3 +1,14 @@
+"""Kafka Consumer Script"""
+"""
+Example usage:
+    python consumer.py --consume-from kafka --topic demo-topic --from-beginning --partition 0
+    python consumer.py --consume-from eventhub --topic test-event-hub --from-beginning --fixed-group --partition 2
+    python consumer.py --consume-from eventhub --topic test-event-hub
+This script allows consuming messages from a specified Kafka topic interactively.
+Messages can be consumed from a specific partition if desired.
+Configuration is read from a JSON file (config.json) which should contain
+the necessary connection details for Kafka or Event Hub.
+"""
 import json
 import uuid
 import time
@@ -28,7 +39,7 @@ def create_consumer(config, group_id=None, start_from="latest"):
 
 def consume_messages(consumer, topic, mode="continuous"):
     if args.partition:
-        tp = TopicPartition('demo-topic', 2)
+        tp = TopicPartition(topic, 2)
         consumer.assign([tp])
     else:
         consumer.subscribe([topic])
@@ -60,12 +71,13 @@ def consume_messages(consumer, topic, mode="continuous"):
             key = msg.key().decode() if msg.key() else "None"
             value = msg.value().decode()
 
-            print(f"\nMessage #{message_count}:")
-            print(f"   Key: {key}")
-            print(f"   Value: {value}")
-            print(f"   Partition: {msg.partition()}")
-            print(f"   Offset: {msg.offset()}")
-            print(f"   Timestamp: {msg.timestamp()[1] if msg.timestamp()[1] > 0 else 'N/A'}")
+            print(f"\nMessage #{message_count}:\n"
+                  f"   Key: {key}\n"
+                  f"   Value: {value}\n"
+                  f"   Partition: {msg.partition()}\n"
+                  f"   Offset: {msg.offset()}\n"
+                  f"   Timestamp: {msg.timestamp()[1] if msg.timestamp()[1] > 0 else 'N/A'}")
+
 
             if mode == "single":
                 print("Single message mode - exiting after first message")
