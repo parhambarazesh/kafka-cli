@@ -1,3 +1,9 @@
+"""Event Hub producer using HTTPS"""
+"""
+This code uses SAS tokens for authentication. The event is sent with a simple POST request to the /messages endpoint 
+of the Event Hub. Consumer is not supported over HTTPS.
+"""
+
 import os
 import requests
 import time
@@ -6,15 +12,11 @@ import hmac
 import hashlib
 import base64
 
-"""
-This example uses SAS tokens for authentication.
-The event is sent with a simple POST request to the /messages endpoint of the Event Hub.
-"""
-
 NAMESPACE = os.getenv("NAMESPACE")
 EVENT_HUB = os.getenv("EVENT_HUB")
 KEY_NAME = os.getenv("KEY_NAME")
 KEY_VALUE = os.getenv("KEY_VALUE")
+
 
 def generate_sas_token(uri, key_name, key_value, expiry=3600):
     ttl = int(time.time()) + expiry
