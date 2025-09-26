@@ -1,4 +1,4 @@
-"""Kafka Producer Script"""
+"""Kafka Producer Tool"""
 """
 Example usage:
     python producer.py --publish-to kafka --topic demo-topic --partition 0
@@ -7,18 +7,13 @@ This script allows sending messages to a specified Kafka topic interactively.
 Messages can be sent to a specific partition if desired.
 Configuration is read from a JSON file (config.json) which should contain
 the necessary connection details for Kafka or Event Hub.
-
-Note:
-Kafka supports auto creation of non-existent topics (see docker-compose.yml). But Azure Event Hubs does not nativelt
-support auto creation of Event Hubs. You need to create the Event Hub beforehand in the Azure portal or use Azure CLI.
-The producer script can publish to existing Event Hubs.
 """
+
 import time
 import sys
-from argparse import ArgumentParser
-
-from confluent_kafka import Producer
 import json
+from argparse import ArgumentParser
+from confluent_kafka import Producer
 
 
 def get_config(file_path):
@@ -102,10 +97,12 @@ def main(config):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--publish-to", help="target environment to publish messages to; kafka or eventhub", default="kafka")
+    parser.add_argument("--publish-to", help="target environment to publish messages to; kafka or eventhub",
+                        default="kafka")
     parser.add_argument("--partition", type=int, help="Specific partition to produce to", default=None)
     parser.add_argument("--topic", type=str, help="Topic to produce to", default="demo-topic")
-    parser.add_argument("--static-key", action="store_true", help="Use a static key for all messages (for testing partitioning)")
+    parser.add_argument("--static-key", action="store_true",
+                        help="Use a static key for all messages (for testing partitioning)")
     args = parser.parse_args()
     environment = args.publish_to
 

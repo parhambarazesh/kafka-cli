@@ -1,4 +1,4 @@
-"""Kafka Consumer Script"""
+"""Kafka Consumer Tool"""
 """
 Example usage:
     python consumer.py --consume-from kafka --topic demo-topic --from-beginning --partition 0
@@ -14,13 +14,14 @@ import uuid
 import time
 import sys
 from argparse import ArgumentParser
-
 from confluent_kafka import Consumer, TopicPartition
+
 
 def get_config(file_path):
     with open(file_path, 'r') as file:
         config_data = json.load(file)
     return config_data
+
 
 def create_consumer(config, group_id=None, start_from="latest"):
     if group_id is None:
@@ -36,6 +37,7 @@ def create_consumer(config, group_id=None, start_from="latest"):
                 config[key] = start_from
 
     return Consumer(config), group_id
+
 
 def consume_messages(consumer, topic, mode="continuous"):
     if args.partition is not None:
@@ -78,7 +80,6 @@ def consume_messages(consumer, topic, mode="continuous"):
                   f"   Offset: {msg.offset()}\n"
                   f"   Timestamp: {msg.timestamp()[1] if msg.timestamp()[1] > 0 else 'N/A'}")
 
-
             if mode == "single":
                 print("Single message mode - exiting after first message")
                 break
@@ -87,6 +88,7 @@ def consume_messages(consumer, topic, mode="continuous"):
         print(f"\nConsumer stopped by user after {message_count} messages")
 
     return message_count
+
 
 def main(config):
     topic = args.topic
@@ -101,7 +103,7 @@ def main(config):
     else:
         group_id = None
 
-    if args.from_beginning: # Read all messages from the latest position
+    if args.from_beginning:  # Read all messages from the latest position
         start_from = "earliest"
         mode = "continuous"
     elif args.latest_only:
@@ -128,6 +130,7 @@ def main(config):
     finally:
         consumer.close()
         print("Consumer closed")
+
 
 if __name__ == "__main__":
     parser = ArgumentParser()
