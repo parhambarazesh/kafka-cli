@@ -1,6 +1,6 @@
 version: '3.8'
 services:
-  zookeeper: # setting up zookeeper to manage kafka cluster/metadata/configuration
+  zookeeper: # setting up zookeeper to manage kafka cluster/metadata/configuration. Removed in the latest versions of Kafka but still used in this setup.
     image: confluentinc/cp-zookeeper:7.5.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
