@@ -38,8 +38,8 @@ def create_consumer(config, group_id=None, start_from="latest"):
     return Consumer(config), group_id
 
 def consume_messages(consumer, topic, mode="continuous"):
-    if args.partition:
-        tp = TopicPartition(topic, 2)
+    if args.partition is not None:
+        tp = TopicPartition(topic, args.partition)
         consumer.assign([tp])
     else:
         consumer.subscribe([topic])
