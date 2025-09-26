@@ -1,0 +1,78 @@
+{
+  "producer": {
+    "kafka": {
+      "config": {
+        "bootstrap.servers": "localhost:9092",
+        "acks": "all",
+        "retries": 3,
+        "batch.size": 16384,
+        "linger.ms": 10
+      }
+    },
+    "eventhub": {
+      "config": {
+        "bootstrap.servers": "<eventhub-bootstrap-servers>",
+        "security.protocol": "SASL_SSL",
+        "sasl.mechanisms": "PLAIN",
+        "sasl.username": "$ConnectionString",
+        "sasl.password": "<eventhub-connection-string>",
+        "client.id": "test-producer",
+        "linger.ms": 50,
+        "batch.num.messages": 1000,
+        "message.timeout.ms": 60000
+      }
+    },
+    "ccloud": {
+      "config": {
+        "bootstrap.servers": "<ccloud-bootstrap-servers>",
+        "security.protocol": "SASL_SSL",
+        "sasl.mechanisms": "PLAIN",
+        "sasl.username": "<ccloud-api-key>",
+        "sasl.password": "<ccloud-api-secret>"
+      }
+    }
+  },
+  "consumer": {
+    "kafka": {
+      "config": {
+        "bootstrap.servers": "localhost:9092",
+        "group.id": "{{ group_id }}",
+        "auto.offset.reset": "{{ start_from }}",
+        "enable.auto.commit": true,
+        "auto.commit.interval.ms": 1000,
+        "session.timeout.ms": 30000,
+        "heartbeat.interval.ms": 3000
+      }
+    },
+    "eventhub": {
+      "config": {
+        "bootstrap.servers": "<eventhub-bootstrap-servers>",
+        "security.protocol": "SASL_SSL",
+        "sasl.mechanisms": "PLAIN",
+        "sasl.username": "$ConnectionString",
+        "sasl.password": "<eventhub-connection-string>",
+        "group.id": "{{ group_id }}",
+        "auto.offset.reset": "{{ start_from }}",
+        "enable.auto.commit": true,
+        "auto.commit.interval.ms": 1000,
+        "session.timeout.ms": 30000,
+        "heartbeat.interval.ms": 3000
+      }
+    },
+    "ccloud": {
+      "config": {
+        "bootstrap.servers": "<ccloud-bootstrap-servers>",
+        "security.protocol": "SASL_SSL",
+        "sasl.mechanisms": "PLAIN",
+        "sasl.username": "<ccloud-api-key>",
+        "sasl.password": "<ccloud-api-secret>",
+        "group.id": "{{ group_id }}",
+        "auto.offset.reset": "{{ start_from }}",
+        "enable.auto.commit": true,
+        "auto.commit.interval.ms": 1000,
+        "session.timeout.ms": 30000,
+        "heartbeat.interval.ms": 3000
+      }
+    }
+  }
+}
