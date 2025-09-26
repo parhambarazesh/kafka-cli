@@ -77,8 +77,10 @@ def main(config):
                 message = input(f"Message #{counter}: ")
                 if message.strip():
                     timestamp = int(time.time())
-                    key = f"key-{timestamp}"
-                    # key = "static-key"  # Uncomment to use a static key for partitioning
+                    if args.static_key:
+                        key = "static-key"
+                    else:
+                        key = f"key-{timestamp}"
 
                     success = send_message(producer, topic, message, key)
                     if success:
@@ -103,6 +105,7 @@ if __name__ == "__main__":
     parser.add_argument("--publish-to", help="target environment to publish messages to; kafka or eventhub", default="kafka")
     parser.add_argument("--partition", type=int, help="Specific partition to produce to", default=None)
     parser.add_argument("--topic", type=str, help="Topic to produce to", default="demo-topic")
+    parser.add_argument("--static-key", action="store_true", help="Use a static key for all messages (for testing partitioning)")
     args = parser.parse_args()
     environment = args.publish_to
 
